@@ -10,39 +10,6 @@ const connection = mysql.createConnection({
     database:'employee_tracker_db'
 });
 
-function viewAllDepartments() {
-    connection.query('SELECT * FROM department', (err, results) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        console.table(results);
-        startQuestions();
-    });
-}
-
-function viewAllRoles() {
-    connection.query('SELECT * FROM roles', (err, results) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        console.table(results);
-        startQuestions();
-    });
-}
-
-function viewAllEmployees() {
-    connection.query('SELECT * FROM employee', (err, results) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        console.table(results);
-        startQuestions();
-    });
-}
-
 function startQuestions() {
     const questions = [
         {
@@ -87,32 +54,73 @@ function startQuestions() {
                 exitApp();
             }
         });
-    }
+};
 
-    function addDepartment(){
-        inquirer.prompt([
+function viewAllDepartments() {
+    connection.query('SELECT * FROM department', (err, results) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        console.table(results);
+        startQuestions();
+    });
+};
+
+function viewAllRoles() {
+    connection.query('SELECT * FROM roles', (err, results) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        console.table(results);
+        startQuestions();
+    });
+};
+
+function viewAllEmployees() {
+    connection.query('SELECT * FROM employee', (err, results) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        console.table(results);
+        startQuestions();
+    });
+};
+
+function addDepartment(){
+        inquirer.prompt(
             {
                 type: 'input',
                 name: 'departmentName',
                 message: 'Enter the name of the department:'
             },
-        ])
+        )
         .then((answers) => {
             const departmentName = answers.departmentName;
-            connection.query('INSERT INTO department (name) VALUES (?)',
-            [departmentName], (err, result) => {
+            connection.query('INSERT INTO department SET ?', {dep_name: departmentName}, (err, results) => {
                 if (err) {
                     console.error(err);
                     return;
                 }
+                viewAllDepartments();
                 console.log(`Department '${departmentName}' added successfully`);
-                startQuestions();
             }
             );
         });
-    };
+};
 
-    function addRole() {
+function addRole() {
+    const department = [];
+    connection.query('SELECT * FROM department', (err, res) => {
+        res.forEach(depart => {
+            let departInfo = {
+                name: depart.dep_name,
+                value: depart.id
+            };
+            department.push(departInfo);
+        });
         inquirer.prompt([
             {
             type: 'input',
@@ -131,21 +139,32 @@ function startQuestions() {
             },
         ])
         .then((answers) => {
-            const {roleTitle, roleSalary, departmentId} = answers;
-            connection.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)',
-            [roleTitle, roleSalary, departmentId], (err, result) => {
+            const roleTitle = answers.roleTitle;
+            connection.query('INSERT INTO roles SET ?', {
+                title: roleTitle, 
+                salary: answers.roleSalary, 
+                department_id: answers.departmentId
+            }, (err, results) => {
                 if (err) {
                     console.error(err);
                     return;
                 }
+                viewAllRoles();
                 console.log(`Role '${roleTitle} added successfully!`);
-                startQuestions();
-            }
-        );
+            });
         });
-    }
+    });
+};
 
-    function addEmployee() {
+function addEmployee() {
+    connection.query('SELECT * FROM roles', (err, roleResponse) => {
+        const roles = [];
+        roleResponse.forEach(({ title, id }) => {
+            roles.push({
+                name: title,
+                value: id
+            });
+        });
         inquirer.prompt([
             {
                 type: 'input',
@@ -169,58 +188,77 @@ function startQuestions() {
             },
         ])
         .then((answers) => {
-            const {firstName, lastName, roleId, managerId} = answers;
-            connection.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)',
-            [firstName, lastName, roleId, managerId], (err, result) => {
+            const firstName =answers.firstName;
+            const lastName = answers.lastName;
+            connection.query('INSERT INTO employee SET ?', {
+                first_name: firstName, 
+                last_name: lastName, 
+                role_id: answers.roleId, 
+                manager_id: answers.managerId
+            }, (err, results) => {
                 if (err) {
                     console.error(err);
                     return;
                 }
+                viewAllEmployees();
                 console.log(`Employee '${firstName} ${lastName}' added successfully!`);
-                startQuestions();
-            }
-            );
+            });
         });
-    }
+    });
+};
 
-    function updateEmployeeRole(){
+function updateEmployeeRole() {
+    connection.query('SELECT * FROM employee', (err, employeeRes) => {
+        const employeeChoices = employeeRes.map(({ id, first_name, last_name}) => ({
+            name: `${first_name} ${last_name}`,
+            value: id
+        }));
+
+    connection.query('SELECT * FROM roles', (err, roleRes) => {
+        const roleChoices = roleRes.map(({ id, title }) => ({
+            name: title,
+            value: id
+        }));
+
         inquirer.prompt([
             {
-                type: 'input',
-                name: 'employeeId',
-                message: "Enter the employee's ID:",
+                type: 'list',
+                name: 'employee',
+                message: "Enter the employee you want to update:",
+                choices: employeeChoices
             },
             {
-                type: 'input',
-                name: 'newRoleId',
-                message: "Enter the new role ID for the employee:",
+                type: 'list',
+                name: 'newRole',
+                message: "Enter the new role to update for the employee:",
+                choices: roleChoices
             },
         ])
         .then((answers) => {
-            const {employeeId, newRoleId} = answers;
-            connection.query('UPDATE employee SET role_id = ? WHERE id = ?',
-            [newRoleId, employeeId], (err, result) => {
+            connection.query(`UPDATE employee SET role_id = ${answers.newRole} WHERE id = ${answers.employee}`, (err, res) => {
                 if (err) {
                     console.error(err);
                     return;
                 }
-                console.log(`Employee with ID ${employeeId} has been updated with a new role.`);
-                startQuestions();
+                viewAllEmployees();
+                console.log(`Employee with ID ${answers.employee} has been updated with a new role.`);
             }
             );
-        });
-    }
+          });
+      });
+    });
+}
 
-    function exitApp() {
-        console.log('You have exited Employee Tracker, goodbye!');
+function exitApp() {
+        console.log('You have exited Employee Tracker. Goodbye!');
         connection.end();
         process.exit();
-    }
+};
 
-    connection.connect((err) => {
+connection.connect((err) => {
         if (err) {
             console.error('Failed to connect to database:', err);
         }
-        console.log('Connected to database!');
         startQuestions();
-    });
+        console.log('Connected to database!');
+});
