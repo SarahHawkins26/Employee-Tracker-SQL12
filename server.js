@@ -3,6 +3,7 @@ const inquirer = require('inquirer');
 const consoleTable = require('console.table');
 require('dotenv').config();
 
+//create connection to Mysql database
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -10,6 +11,7 @@ const connection = mysql.createConnection({
     database:'employee_tracker_db'
 });
 
+//function to start initial questions
 function startQuestions() {
     const questions = [
         {
@@ -56,6 +58,7 @@ function startQuestions() {
         });
 };
 
+//function to view all departments
 function viewAllDepartments() {
     connection.query('SELECT * FROM department', (err, results) => {
         if (err) {
@@ -67,6 +70,7 @@ function viewAllDepartments() {
     });
 };
 
+//function to view all roles
 function viewAllRoles() {
     connection.query('SELECT * FROM roles', (err, results) => {
         if (err) {
@@ -78,6 +82,7 @@ function viewAllRoles() {
     });
 };
 
+//function to view all employee's
 function viewAllEmployees() {
     connection.query('SELECT * FROM employee', (err, results) => {
         if (err) {
@@ -89,6 +94,7 @@ function viewAllEmployees() {
     });
 };
 
+//function to add department
 function addDepartment(){
         inquirer.prompt(
             {
@@ -111,6 +117,7 @@ function addDepartment(){
         });
 };
 
+//function to add roles
 function addRole() {
     const department = [];
     connection.query('SELECT * FROM department', (err, res) => {
@@ -156,6 +163,7 @@ function addRole() {
     });
 };
 
+//function to all employees
 function addEmployee() {
     connection.query('SELECT * FROM roles', (err, roleResponse) => {
         const roles = [];
@@ -207,6 +215,7 @@ function addEmployee() {
     });
 };
 
+//update employees role
 function updateEmployeeRole() {
     connection.query('SELECT * FROM employee', (err, employeeRes) => {
         const employeeChoices = employeeRes.map(({ id, first_name, last_name}) => ({
@@ -249,12 +258,14 @@ function updateEmployeeRole() {
     });
 }
 
+//quit application
 function exitApp() {
         console.log('You have exited Employee Tracker. Goodbye!');
         connection.end();
         process.exit();
 };
 
+//connection to the database and start of the application
 connection.connect((err) => {
         if (err) {
             console.error('Failed to connect to database:', err);
