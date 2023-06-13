@@ -11,13 +11,13 @@
 
 
 ## Description
-This note taking app lets you write and view personal notes at any time.
+This employee tracker app performs CRUD operations.
 
 ## Installation
-In the command line type, npm i, to install the needed applications
+In the command line type, npm i, to install the needed applications. Open mysql shell and USE the needed database. Then SOURCE the needed information and tables.
 
 ## Usage
-Use this project to create notes with option of unique titles to find and view at another time.
+Use this project to keep needed information in order.
 
 ## Contribution
 Google, lots and lots of google.
